@@ -52,6 +52,26 @@ jobs:
         with:
           gradle-version: '8.11.1'
 
+      - name: Extract Android source ZIP into project root
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f settings.gradle ] && [ -f app/build.gradle ]; then
+            echo "Android project files already at repository root."
+          else
+            SOURCE_ZIP="Watch8_AirportWorldClock_134Cities_WearOS_Source.zip"
+            test -f "$SOURCE_ZIP" || { echo "::error::Source ZIP not found: $SOURCE_ZIP"; exit 1; }
+            EXTRACT_DIR="$RUNNER_TEMP/watch8-source"
+            mkdir -p "$EXTRACT_DIR"
+            unzip -q "$SOURCE_ZIP" -d "$EXTRACT_DIR"
+            PROJECT_DIR="$EXTRACT_DIR/AirportWorldClock"
+            test -f "$PROJECT_DIR/settings.gradle" || { echo "::error::No settings.gradle inside ZIP"; exit 1; }
+            test -f "$PROJECT_DIR/app/build.gradle" || { echo "::error::No app/build.gradle inside ZIP"; exit 1; }
+            cp "$PROJECT_DIR/settings.gradle" "$PROJECT_DIR/build.gradle" "$PROJECT_DIR/gradle.properties" .
+            cp -R "$PROJECT_DIR/app" ./app
+            echo "Android project extracted to repository root."
+          fi
+
       - name: Verify Android project structure
         shell: bash
         run: |
